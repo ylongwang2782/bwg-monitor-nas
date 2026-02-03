@@ -6,6 +6,7 @@ BWG Stock Monitor - Standalone version for NAS deployment
 
 import os
 import sys
+import signal
 import urllib.request
 import urllib.parse
 import time
@@ -14,6 +15,9 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 # Configuration / 配置
+CHECK_INTERVAL = int(os.environ.get("CHECK_INTERVAL", 180))  # seconds, default 3 minutes
+DAILY_REPORT_HOUR = int(os.environ.get("DAILY_REPORT_HOUR", 12))  # Beijing time, default 12:00
+
 PRODUCTS = [
     {"pid": 94,  "name": "CN2 GIA-E 10G", "price": "49.99", "desc": "10G SSD / 0.5G RAM / 1Gbps"},
     {"pid": 105, "name": "CN2 GIA-E 20G", "price": "89.99", "desc": "20G SSD / 1G RAM / 1Gbps"},
@@ -23,7 +27,9 @@ PRODUCTS = [
 BWH_URL = "https://bwh81.net/cart.php?a=add&pid={pid}"
 
 # State file to track what we've notified about
-STATE_FILE = Path(__file__).parent / ".stock_state.json"
+# Use /app/data in Docker, otherwise use script directory
+DATA_DIR = os.environ.get("DATA_DIR", str(Path(__file__).parent))
+STATE_FILE = Path(DATA_DIR) / ".stock_state.json"
 
 
 def load_state():
@@ -218,5 +224,66 @@ def main():
     print("\n" + "=" * 60)
 
 
+def get_beijing_hour():
+    """Get current hour in Beijing timezone"""
+    beijing_tz = timezone(timedelta(hours=8))
+    return datetime.now(beijing_tz).hour
+
+
+def daemon_mode():
+    """Run in daemon mode for Docker deployment"""
+    print("=" * 60)
+    print("BWG Stock Monitor - Daemon Mode")
+    print(f"Check interval: {CHECK_INTERVAL} seconds")
+    print(f"Daily report hour: {DAILY_REPORT_HOUR}:00 Beijing time")
+    print("=" * 60)
+
+    # Graceful shutdown handler
+    running = True
+
+    def signal_handler(signum, frame):
+        nonlocal running
+        print("\nReceived shutdown signal, exiting gracefully...")
+        running = False
+
+    signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGINT, signal_handler)
+
+    last_report_date = None
+
+    while running:
+        try:
+            # Run stock check
+            main()
+
+            # Check if we should send daily report
+            beijing_tz = timezone(timedelta(hours=8))
+            now = datetime.now(beijing_tz)
+            today = now.date()
+
+            if now.hour == DAILY_REPORT_HOUR and last_report_date != today:
+                print("\n📊 Sending daily report...")
+                sys.argv = [sys.argv[0], "--daily-report"]
+                main()
+                sys.argv = [sys.argv[0]]
+                last_report_date = today
+
+            # Wait for next check
+            print(f"\n💤 Sleeping for {CHECK_INTERVAL} seconds...\n")
+            for _ in range(CHECK_INTERVAL):
+                if not running:
+                    break
+                time.sleep(1)
+
+        except Exception as e:
+            print(f"Error in daemon loop: {e}")
+            time.sleep(60)  # Wait a bit before retrying on error
+
+    print("Daemon stopped.")
+
+
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) > 1 and sys.argv[1] == "--daemon":
+        daemon_mode()
+    else:
+        main()

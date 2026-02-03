@@ -21,7 +21,7 @@
 | CN2 GIA-E 20G | $89.99/year | 20G SSD / 1G RAM / 1Gbps |
 | CN2 GIA-E 20G | $89.90/year | 20G SSD / 1G RAM / 2.5Gbps |
 
-## Quick Start
+## Quick Start (Docker Compose)
 
 ### 1. Clone Repository
 
@@ -42,23 +42,48 @@ Set up your notification credentials:
 - **Telegram**: Get bot token from [@BotFather](https://t.me/BotFather)
 - **Bark** (optional): Get key from Bark iOS app
 
-### 3. Test Run
+### 3. Start with Docker Compose
 
 ```bash
-# Make script executable
-chmod +x monitor.py
-
-# Load environment variables and run
-source .env
-python3 monitor.py
-
-# Test daily report
-python3 monitor.py --daily-report
+docker compose up -d
 ```
 
-## Deployment Options
+That's it! The monitor is now running.
 
-### Option 1: Cron (Recommended for Most NAS)
+### Common Docker Commands
+
+```bash
+# View logs
+docker compose logs -f
+
+# Stop monitor
+docker compose down
+
+# Restart monitor
+docker compose restart
+
+# Check status
+docker compose ps
+
+# Rebuild after code changes
+docker compose up -d --build
+```
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `TELEGRAM_BOT_TOKEN` | (required) | Telegram bot token |
+| `TELEGRAM_CHAT_ID` | (required) | Telegram chat ID |
+| `BARK_KEY` | (optional) | Bark key for iOS push |
+| `CHECK_INTERVAL` | `180` | Check interval in seconds (default 3 min) |
+| `DAILY_REPORT_HOUR` | `12` | Daily report hour in Beijing time |
+
+---
+
+## Alternative Deployment Options
+
+### Option 1: Cron (For NAS without Docker)
 
 Works on Synology, QNAP, and most Linux-based NAS systems.
 
@@ -79,7 +104,7 @@ Add the following lines:
 
 **Note**: Replace `/path/to/bwg-monitor-nas` with your actual path.
 
-### Option 2: Systemd Timer (For Advanced Users)
+### Option 2: Systemd Timer
 
 Create `/etc/systemd/system/bwg-monitor.service`:
 
@@ -235,24 +260,18 @@ Requires Python 3.6+. Check your version:
 python3 --version
 ```
 
-## Advanced Usage
-
-### Run as Docker Container
-
-Create `Dockerfile`:
-
-```dockerfile
-FROM python:3-alpine
-WORKDIR /app
-COPY monitor.py .env ./
-CMD ["sh", "-c", "while true; do python monitor.py; sleep 180; done"]
-```
-
-Build and run:
+## Standalone Usage (Without Docker)
 
 ```bash
-docker build -t bwg-monitor .
-docker run -d --name bwg-monitor --restart unless-stopped bwg-monitor
+# Single check
+source .env
+python3 monitor.py
+
+# Send daily report
+python3 monitor.py --daily-report
+
+# Run in daemon mode (like Docker does)
+python3 monitor.py --daemon
 ```
 
 ## License

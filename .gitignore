@@ -3,6 +3,7 @@
 
 # State file
 .stock_state.json
+data/
 
 # Logs
 *.log

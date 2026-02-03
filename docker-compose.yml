@@ -1,0 +1,27 @@
+services:
+  bwg-monitor:
+    build: .
+    container_name: bwg-monitor
+    restart: unless-stopped
+    environment:
+      # Required: Telegram configuration
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      # Optional: Bark for iOS push
+      - BARK_KEY=${BARK_KEY:-}
+      # Optional: Check interval in seconds (default: 180 = 3 minutes)
+      - CHECK_INTERVAL=${CHECK_INTERVAL:-180}
+      # Optional: Daily report hour in Beijing time (default: 12)
+      - DAILY_REPORT_HOUR=${DAILY_REPORT_HOUR:-12}
+    volumes:
+      # Persist notification state across container restarts
+      - bwg-data:/app/data
+    # Optional: limit resource usage
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+          cpus: '0.1'
+
+volumes:
+  bwg-data:

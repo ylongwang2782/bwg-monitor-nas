@@ -1,0 +1,24 @@
+# Git
+.git
+.gitignore
+
+# Environment files (passed via docker-compose)
+.env
+.env.example
+
+# Documentation
+README.md
+*.md
+
+# State files (mounted as volume)
+.stock_state.json
+data/
+
+# System files
+.DS_Store
+*.pyc
+__pycache__
+
+# Old deployment configs
+systemd/
+crontab.example
