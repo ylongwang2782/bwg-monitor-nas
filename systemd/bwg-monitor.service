@@ -1,0 +1,22 @@
+[Unit]
+Description=BWG Stock Monitor
+After=network.target
+
+[Service]
+Type=oneshot
+User=your_user
+WorkingDirectory=/path/to/bwg-monitor-nas
+EnvironmentFile=/path/to/bwg-monitor-nas/.env
+ExecStart=/usr/bin/python3 /path/to/bwg-monitor-nas/monitor.py
+StandardOutput=journal
+StandardError=journal
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/path/to/bwg-monitor-nas
+
+[Install]
+WantedBy=multi-user.target

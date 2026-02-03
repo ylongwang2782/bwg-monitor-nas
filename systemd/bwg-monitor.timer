@@ -1,0 +1,16 @@
+[Unit]
+Description=BWG Stock Monitor Timer
+Requires=bwg-monitor.service
+
+[Timer]
+# Run 1 minute after boot
+OnBootSec=1min
+
+# Run every 3 minutes
+OnUnitActiveSec=3min
+
+# Persist timer across reboots
+Persistent=true
+
+[Install]
+WantedBy=timers.target

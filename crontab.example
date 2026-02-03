@@ -1,0 +1,18 @@
+# BWG Stock Monitor - Crontab Example
+#
+# Installation:
+# 1. Edit paths in this file
+# 2. Add to your crontab: crontab -e
+# 3. Paste the lines below
+
+# Check stock every 3 minutes
+*/3 * * * * cd /path/to/bwg-monitor-nas && /bin/bash -c 'source .env && /usr/bin/python3 monitor.py' >> /path/to/logs/monitor.log 2>&1
+
+# Daily report at 12:00 Beijing time (04:00 UTC)
+0 4 * * * cd /path/to/bwg-monitor-nas && /bin/bash -c 'source .env && /usr/bin/python3 monitor.py --daily-report' >> /path/to/logs/monitor.log 2>&1
+
+# Alternative: Check every minute (more aggressive)
+# * * * * * cd /path/to/bwg-monitor-nas && /bin/bash -c 'source .env && /usr/bin/python3 monitor.py' >> /path/to/logs/monitor.log 2>&1
+
+# Alternative: Check every 5 minutes
+# */5 * * * * cd /path/to/bwg-monitor-nas && /bin/bash -c 'source .env && /usr/bin/python3 monitor.py' >> /path/to/logs/monitor.log 2>&1
